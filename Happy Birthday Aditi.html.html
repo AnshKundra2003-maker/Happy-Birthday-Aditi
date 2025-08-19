@@ -1,0 +1,176 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1.0">
+<title>Happy Birthday Aditi</title>
+<style>
+:root{
+  --bg1:#1e1f2e; --bg2:#2e2f44; --cake:#f5d1c1; --candle:#ffe0b2; --flame:#ffae42; --ribbon:#c2c7f0; --balloon:#b0c4de; --text:#f3f3f3;
+}
+html,body{margin:0;padding:0;width:100%;height:100%;overflow:hidden;font-family:'Segoe UI',sans-serif;background:linear-gradient(180deg,var(--bg1),var(--bg2));color:var(--text);}
+.center{position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);text-align:center;z-index:100;}
+.headline{font-size:4vw;font-weight:900;color:#ffe0b2;text-shadow:0 0 12px var(--ribbon);}
+.message{font-size:2vw;margin-top:1em;opacity:0;transition:all 1.5s ease;}
+.lights{position:absolute;top:0;left:0;width:100%;height:100px;pointer-events:none;z-index:90;}
+.wire{position:absolute;top:40px;width:100%;height:2px;background:rgba(255,255,255,0.1);}
+.bulb{position:absolute;width:12px;height:12px;border-radius:50%;background:var(--ribbon);box-shadow:0 0 12px var(--ribbon),0 0 18px var(--ribbon);}
+.ribbon{position:absolute;width:100px;height:6px;background:linear-gradient(90deg,#c2c7f0,#d1c7f5);border-radius:3px;animation:float 4s infinite alternate;}
+@keyframes float{0%{transform:translateY(0) rotate(0deg);}100%{transform:translateY(8px) rotate(5deg);}}
+.cake-container{position:absolute;bottom:50px;left:50%;transform:translateX(-50%);z-index:50;}
+.cake{width:250px;height:150px;background:var(--cake);border-radius:20px;position:relative;box-shadow:0 8px 15px rgba(0,0,0,0.4);}
+.cake-layer{position:absolute;width:220px;height:40px;background:#e9bfa6;left:50%;transform:translateX(-50%);border-radius:12px;top:20px;}
+.candle{position:absolute;width:12px;height:40px;background:var(--candle);top:-40px;border-radius:3px;}
+.flame{position:absolute;width:8px;height:12px;background:var(--flame);border-radius:50%;top:-12px;left:50%;transform:translateX(-50%);}
+.balloon{position:absolute;width:50px;height:70px;border-radius:50%;background:var(--balloon);opacity:0.85;box-shadow:0 4px 10px rgba(0,0,0,0.2);}
+.string{position:absolute;width:2px;height:50px;background:#fff;left:50%;top:100%;transform:translateX(-50%);}
+canvas{position:absolute;top:0;left:0;width:100%;height:100%;pointer-events:none;z-index:0;}
+</style>
+</head>
+<body>
+
+<div class="lights"><div class="wire"></div></div>
+<div class="center">
+  <div class="headline">Happy Birthday Aditi</div>
+  <div class="message" id="message">Wishing you joy, laughter, and endless happiness!</div>
+</div>
+
+<div class="cake-container">
+  <div class="cake">
+    <div class="cake-layer"></div>
+    <div class="cake-layer" style="top:70px;width:200px;height:35px;background:#e0a891;"></div>
+    <div class="candle" style="left:50px;"><div class="flame"></div></div>
+    <div class="candle" style="left:110px;"><div class="flame"></div></div>
+    <div class="candle" style="left:170px;"><div class="flame"></div></div>
+  </div>
+</div>
+
+<canvas id="confetti"></canvas>
+<canvas id="particles"></canvas>
+<canvas id="fireworks"></canvas>
+<canvas id="sparkles"></canvas>
+
+<audio id="music" loop autoplay>
+  <source src="https://cdn.pixabay.com/download/audio/2022/03/15/audio_9f1eae91e0.mp3?filename=happy-birthday-11291.mp3" type="audio/mpeg">
+</audio>
+
+<script>
+// ---------- Setup ----------
+const R=(a,b)=>Math.random()*(b-a)+a;
+let W=innerWidth,H=innerHeight;
+window.addEventListener('resize',()=>{W=innerWidth;H=innerHeight; confettiCanvas.width=W; confettiCanvas.height=H; particlesCanvas.width=W; particlesCanvas.height=H; fireworksCanvas.width=W; fireworksCanvas.height=H; sparklesCanvas.width=W; sparklesCanvas.height=H;});
+
+// ---------- Balloons ----------
+function spawnBalloons(n=5){
+  for(let i=0;i<n;i++){
+    const b=document.createElement('div'); b.className='balloon';
+    b.style.left=R(50,W-100)+'px'; b.style.bottom='-70px';
+    const s=document.createElement('div'); s.className='string'; b.appendChild(s);
+    document.body.appendChild(b);
+    const dur=R(12000,20000);
+    const anim=b.animate([{transform:'translateY(0)'},{transform:`translateY(${-H-100}px)`}],{duration:dur,iterations:1});
+    anim.onfinish=()=>{b.remove();}
+    setTimeout(()=>spawnBalloons(1),R(3000,6000));
+  }
+}
+spawnBalloons();
+
+// ---------- Ribbons ----------
+for(let i=0;i<4;i++){
+  const r=document.createElement('div'); r.className='ribbon';
+  r.style.top=(30*i)+'px'; r.style.left=R(0,W-100)+'px'; r.style.transform=`rotate(${R(-15,15)}deg)`;
+  document.body.appendChild(r);
+}
+
+// ---------- Confetti ----------
+const confettiCanvas=document.getElementById('confetti'); confettiCanvas.width=W; confettiCanvas.height=H;
+const ctx=confettiCanvas.getContext('2d');
+const confettiParticles=[];
+for(let i=0;i<80;i++){confettiParticles.push({x:R(0,W),y:R(0,H),r:R(4,7),c:`hsl(${R(0,360)},60%,70%)`,vx:R(-0.5,0.5),vy:R(1,3)})}
+function drawConfetti(){
+  ctx.clearRect(0,0,W,H);
+  for(let p of confettiParticles){
+    ctx.fillStyle=p.c; ctx.beginPath(); ctx.rect(p.x,p.y,p.r,p.r*1.2); ctx.fill();
+    p.x+=p.vx; p.y+=p.vy; if(p.y>H){p.y=-10; p.x=R(0,W);}
+  }
+  requestAnimationFrame(drawConfetti);
+}
+drawConfetti();
+
+// ---------- Candle flames ----------
+document.querySelectorAll('.flame').forEach(f=>{
+  f.animate([{transform:'translateX(-50%) scale(1)'},{transform:'translateX(-50%) scale(1.4)'},{transform:'translateX(-50%) scale(1)'}],
+            {duration:400,iterations:Infinity});
+});
+
+// ---------- Particle glow ----------
+const particlesCanvas=document.getElementById('particles'); particlesCanvas.width=W; particlesCanvas.height=H;
+const pCtx=particlesCanvas.getContext('2d');
+const particles=[];
+for(let i=0;i<80;i++){particles.push({x:R(0,W),y:R(0,H),r:R(1,3),vx:R(-0.3,0.3),vy:R(-0.5,0.5),alpha:R(0.3,0.7)})}
+function drawParticles(){
+  pCtx.clearRect(0,0,W,H);
+  for(let p of particles){
+    pCtx.fillStyle=`rgba(255,255,255,${p.alpha})`; pCtx.beginPath(); pCtx.arc(p.x,p.y,p.r,0,2*Math.PI); pCtx.fill();
+    p.x+=p.vx; p.y+=p.vy;
+    if(p.x<0)p.x=W;if(p.x>W)p.x=0;if(p.y<0)p.y=H;if(p.y>H)p.y=0;
+  }
+  requestAnimationFrame(drawParticles);
+}
+drawParticles();
+
+// ---------- Lights ----------
+const wire=document.querySelector('.wire');
+for(let i=0;i<15;i++){
+  const bulb=document.createElement('div'); bulb.className='bulb'; bulb.style.left=(i*6)+'%'; wire.appendChild(bulb);
+  bulb.animate([{opacity:0},{opacity:1},{opacity:0}],{duration:R(700,1200),iterations:Infinity});
+}
+
+// ---------- Message fade-in ----------
+setTimeout(()=>{document.getElementById('message').style.opacity=1;},1500);
+
+// ---------- Music ----------
+const music=document.getElementById('music'); music.volume=0.25;
+document.body.addEventListener('click',()=>{if(music.paused) music.play();});
+
+// ---------- Fireworks ----------
+const fireworksCanvas=document.getElementById('fireworks'); fireworksCanvas.width=W; fireworksCanvas.height=H;
+const fCtx=fireworksCanvas.getContext('2d');
+let fireworks=[];
+function Firework(){
+  this.x=R(100,W-100); this.y=H+10; this.tx=R(100,W-100); this.ty=R(H/4,H/2); this.particles=[];
+  this.update=function(){
+    this.y-=3;
+    if(this.y<=this.ty){ for(let i=0;i<30;i++){
+      this.particles.push({x:this.tx,y:this.ty,vx:R(-3,3),vy:R(-3,3),r:R(2,4),c:`hsl(${R(0,360)},80%,70%)`}); }}
+    this.particles.forEach(p=>{p.x+=p.vx; p.y+=p.vy; p.vy+=0.05; p.r*=0.96;});
+    this.particles=this.particles.filter(p=>p.r>0.5);
+  }
+  this.draw=function(){
+    this.particles.forEach(p=>{fCtx.fillStyle=p.c;fCtx.beginPath();fCtx.arc(p.x,p.y,p.r,0,2*Math.PI);fCtx.fill();});
+  }
+}
+function drawFireworks(){
+  fCtx.clearRect(0,0,W,H);
+  if(R(0,100)<2) fireworks.push(new Firework());
+  fireworks.forEach(fw=>{fw.update(); fw.draw();});
+  fireworks=fireworks.filter(fw=>fw.particles.length>0);
+  requestAnimationFrame(drawFireworks);
+}
+drawFireworks();
+
+// ---------- Sparkles ----------
+const sparklesCanvas=document.getElementById('sparkles'); sparklesCanvas.width=W; sparklesCanvas.height=H;
+const sCtx=sparklesCanvas.getContext('2d');
+const sparkles=[];
+for(let i=0;i<100;i++){sparkles.push({x:R(0,W),y:R(0,H),r:R(1,2),alpha:R(0.3,0.8),vx:R(-0.3,0.3),vy:R(-0.3,0.3)});}
+function drawSparkles(){
+  sCtx.clearRect(0,0,W,H);
+  sparkles.forEach(p=>{sCtx.fillStyle=`rgba(255,255,255,${p.alpha})`;sCtx.beginPath();sCtx.arc(p.x,p.y,p.r,0,2*Math.PI);sCtx.fill();
+    p.x+=p.vx; p.y+=p.vy; if(p.x<0)p.x=W;if(p.x>W)p.x=0;if(p.y<0)p.y=H;if(p.y>H)p.y=0;});
+  requestAnimationFrame(drawSparkles);
+}
+drawSparkles();
+</script>
+</body>
+</html>
